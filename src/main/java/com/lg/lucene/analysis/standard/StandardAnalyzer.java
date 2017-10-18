@@ -1,6 +1,7 @@
 package com.lg.lucene.analysis.standard;
 
 import com.lg.lucene.analysis.Analyzer;
+import com.lg.lucene.analysis.StopFilter;
 
 import java.util.Hashtable;
 
@@ -15,7 +16,13 @@ public class StandardAnalyzer extends Analyzer {
             "they", "this", "to", "was", "will", "with"
     };
 
-    public StandardAnalyzer(String[] topWords){
-
+    public StandardAnalyzer(){
+        this(STOP_WORDS);
     }
+
+    public StandardAnalyzer(String[] stopWords){
+        stopTable = StopFilter.makeStopTable(stopWords);
+    }
+
+
 }
