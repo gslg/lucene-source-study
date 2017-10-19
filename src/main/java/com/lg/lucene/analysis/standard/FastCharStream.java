@@ -24,54 +24,88 @@ public final class FastCharStream implements CharStream {
     }
 
     private final void refill() throws IOException{
+        int newPosition = bufferLength - tokenStart;
+
+        if(tokenStart == 0){
+            if(buffer == null){
+                buffer = new char[2048];
+            }else if(bufferLength == buffer.length){
+                //扩容
+                char[] newBuffer = new char[buffer.length * 2];
+                System.arraycopy(buffer,0,newBuffer,0,bufferLength);
+            }
+        }else {
+            System.arraycopy(buffer,tokenStart,buffer,0,newPosition);
+        }
+
+        bufferLength = newPosition;
+        bufferPosition = newPosition;
+        bufferStart += tokenStart;
+        tokenStart = 0;
+
+        int charsRead = input.read(buffer,newPosition,buffer.length-newPosition);
+
+        if(charsRead == -1)
+            throw new IOException("read past eof");
+        else
+            bufferLength += charsRead;
 
     }
 
     public final char readChar() throws IOException {
-        return 0;
+        if(bufferPosition >= bufferLength)
+            refill();
+        return buffer[bufferPosition++];
     }
 
     public int getColumn() {
-        return 0;
+        return bufferStart + bufferPosition;
     }
 
     public int getLine() {
-        return 0;
+        return 1;
     }
 
     public int getEndColumn() {
-        return 0;
+        return bufferStart + bufferPosition;
     }
 
     public int getEndLine() {
-        return 0;
+        return 1;
     }
 
     public int getBeginColumn() {
-        return 0;
+        return bufferStart + tokenStart;
     }
 
     public int getBeginLine() {
-        return 0;
+        return 1;
     }
 
     public void backup(int amount) {
-
+        bufferPosition -= amount;
     }
 
     public char BeginToken() throws IOException {
-        return 0;
+        tokenStart = bufferPosition;
+        return readChar();
     }
 
     public String GetImage() {
-        return null;
+        return new String(buffer,tokenStart,bufferPosition - tokenStart);
     }
 
     public char[] GetSuffix(int len) {
-        return new char[0];
+        char[] value = new char[len];
+        System.arraycopy(buffer,bufferPosition-len,value,0,len);
+        return value;
     }
 
     public void Done() {
-
+        try {
+            input.close();
+        } catch (IOException e) {
+            System.err.println("Caught: " + e + "; ignoring.");
+        }
     }
 }
